@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 TELEGRAM_TOKEN = os.environ["TELEGRAM_TOKEN"]
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 user_data: dict = {}
 
@@ -45,6 +45,10 @@ def ask_gemini(history: list, system: str) -> str:
         with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read())
             return data["candidates"][0]["content"]["parts"][0]["text"]
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode("utf-8")
+        logger.error(f"Gemini HTTP error {e.code}: {error_body}")
+        return "Что-то пошло не так. Попробуй ещё раз."
     except Exception as e:
         logger.error(f"Gemini error: {e}")
         return "Что-то пошло не так. Попробуй ещё раз."
@@ -94,7 +98,8 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     name = update.effective_user.first_name
     await update.message.reply_text(
         f"Привет, {name}! 👋 Я твой личный ассистент.\n\n"
-        "Могу помочь с задачами, заметками, планированием дня и просто поговорить.",
+        "Могу помочь с задачами, заметками, планированием дня и просто поговорить.\n\n"
+        "Привет! Какие планы на сегодня? 😊",
         reply_markup=main_keyboard()
     )
 
